@@ -3,6 +3,7 @@ import os
 from torch.utils.data import Dataset
 import embeddings
 from tqdm import tqdm
+import torch
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -61,22 +62,23 @@ def get_embeddings(path):
         queries.append(row["query"])
         passages_lists.append(row["passages"]["passage_text"].tolist())
 
-    QUERY_BATCH_SIZE = 4
+    QUERY_BATCH_SIZE = 256
     
-    # Process queries
-    print("Processing queries...")
-    query_embeddings = []
-    for i in tqdm(range(0, len(queries), QUERY_BATCH_SIZE)):
-        batch = queries[i:i + QUERY_BATCH_SIZE]
-        batch_embeddings = embeddings.get_query_embeddings(batch)
-        query_embeddings.extend(batch_embeddings)
+    with torch.no_grad():
+        # Process queries
+        print("Processing queries...")
+        query_embeddings = []
+        for i in tqdm(range(0, len(queries), QUERY_BATCH_SIZE)):
+            batch = queries[i:i + QUERY_BATCH_SIZE]
+            batch_embeddings = embeddings.get_query_embeddings(batch)
+            query_embeddings.extend(batch_embeddings)
 
-    # Process documents
-    print("Processing documents...")
-    document_list_embeddings = []
-    for passages in tqdm(passages_lists):
-        passages_embeddings = [embeddings.get_document_embeddings([passage])[0] for passage in passages]
-        document_list_embeddings.append(passages_embeddings)
+        # Process documents
+        print("Processing documents...")
+        document_list_embeddings = []
+        for passages in tqdm(passages_lists):
+            passages_embeddings = embeddings.get_document_embeddings(passages)
+            document_list_embeddings.append(passages_embeddings)
 
     # Create pairs
     pairs = []
@@ -85,6 +87,12 @@ def get_embeddings(path):
         for doc_embedding in document_embeddings:
             pairs.append((query_embedding.detach().clone(), doc_embedding.detach().clone()))
             doc_embeddings.append(doc_embedding.detach().clone())
+    
+    # Save embeddings to disk
+    print("Saving embeddings to disk...")
+    base_path = os.path.splitext(path)[0]
+    torch.save(pairs, base_path + "_pairs.pt")
+    torch.save(doc_embeddings, base_path + "_docs.pt")
     
     return PairDataset(pairs), DocumentDataset(doc_embeddings)
 
