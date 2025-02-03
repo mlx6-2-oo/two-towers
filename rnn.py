@@ -23,13 +23,25 @@ training_data = [
     ("MongoDB vs PostgreSQL", "Choosing the right database for your project", "Basic knitting patterns for beginners")
 ]
 
-tokenised_training_data = []
+embeddings_training_data = []
 
 for query, relevant_passage, irrelevant_passage in training_data:
-    query_input = tokenizer(query, return_tensors="pt", padding=True, truncation=True)
-    relevant_passage_input = tokenizer(relevant_passage, return_tensors="pt", padding=True, truncation=True)
-    irrelevant_passage_input = tokenizer(irrelevant_passage, return_tensors="pt", padding=True, truncation=True)
-    tokenised_training_data.append((query_input, relevant_passage_input, irrelevant_passage_input))
+    # Get query embeddings
+    query_tokens = tokenizer(query, return_tensors="pt", padding=True, truncation=True)
+    query_outputs = model(**query_tokens)
+    query_embeddings = query_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+    
+    # Get relevant passage embeddings
+    relevant_tokens = tokenizer(relevant_passage, return_tensors="pt", padding=True, truncation=True)
+    relevant_outputs = model(**relevant_tokens)
+    relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+    
+    # Get irrelevant passage embeddings
+    irrelevant_tokens = tokenizer(irrelevant_passage, return_tensors="pt", padding=True, truncation=True)
+    irrelevant_outputs = model(**irrelevant_tokens)
+    irrelevant_embeddings = irrelevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+    
+    embeddings_training_data.append((query_embeddings, relevant_embeddings, irrelevant_embeddings))
 
 class Tower(nn.Module):
     def __init__(self):
@@ -58,15 +70,7 @@ tower_one = TowerOne()
 tower_two = TowerTwo()
 
 # Process first training example as a test
-query_input, relevant_passage_input, _ = tokenised_training_data[0]
-
-# Get embeddings from TinyBERT for query
-query_outputs = model(**query_input)
-query_embeddings = query_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
-
-# Get embeddings from TinyBERT for relevant passage
-relevant_outputs = model(**relevant_passage_input)
-relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+query_embeddings, relevant_embeddings, _ = embeddings_training_data[0]
 
 # Pass embeddings through towers
 query_tower_output = tower_one(query_embeddings)
