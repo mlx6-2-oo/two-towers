@@ -61,7 +61,7 @@ def get_embeddings(path):
         queries.append(row["query"])
         passages_lists.append(row["passages"]["passage_text"].tolist())
 
-    QUERY_BATCH_SIZE = 8
+    QUERY_BATCH_SIZE = 4
     
     # Process queries
     print("Processing queries...")
