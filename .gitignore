@@ -1,6 +1,8 @@
 #project-specific ignores
 venv
 .python-version
+sources
+wandb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
