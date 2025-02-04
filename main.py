@@ -17,7 +17,7 @@ class TowerOne(nn.Module):
             hidden_size=128,
             num_layers=1,
             batch_first=True,
-            dropout=0.1  # Less dropout for shorter sequences
+            dropout=0.0  # Less dropout for shorter sequences
         )
         self.fc = nn.Linear(128, 64)
 
@@ -31,12 +31,12 @@ class TowerTwo(nn.Module):
         super().__init__()
         self.rnn = nn.RNN(
             input_size=input_dim,
-            hidden_size=256,  # Larger hidden size for longer sequences
+            hidden_size=128,  # Larger hidden size for longer sequences
             num_layers=2,     # More layers to capture document structure
             batch_first=True,
-            dropout=0.2       # More dropout for longer sequences
+            dropout=0.0       # More dropout for longer sequences
         )
-        self.fc = nn.Linear(256, 64)  # Project down to same size as TowerOne
+        self.fc = nn.Linear(128, 64)  # Project down to same size as TowerOne
 
     def forward(self, x):
         # x shape: (batch_size, ~200, bert_dim) for documents
@@ -50,9 +50,10 @@ class DualTowerModel(nn.Module):
         self.tower_two = TowerTwo()
     
     def prepare_batch(self, query_batch, document_batch, negative_document_batch):
-        query_embeddings = torch.stack([query for query in query_batch]).to(device)
-        positive_doc_embeddings = torch.stack([doc for doc in document_batch]).to(device)
-        negative_doc_embeddings = torch.stack([doc for doc in negative_document_batch]).to(device)
+        query_embeddings = embeddings.get_query_embeddings(query_batch).to(device)
+        positive_doc_embeddings = embeddings.get_document_embeddings(document_batch).to(device)
+        negative_doc_embeddings = embeddings.get_document_embeddings(neg_document_batch).to(device)
+
         return query_embeddings, positive_doc_embeddings, negative_doc_embeddings
         
     def forward(self, queries, positive_docs, negative_docs):
@@ -82,7 +83,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.ba
 # Initialize model
 model = DualTowerModel()
 model.to(device)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
 
 # Get datasets and dataloaders
 print("Loading training data...")
@@ -105,10 +106,6 @@ for epoch in range(num_epochs):
                      total=len(triple_dataloader))
     
     for batch_idx, (query_batch, document_batch, neg_document_batch) in enumerate(train_loop):
-        query_batch = embeddings.get_query_embeddings(query_batch)
-        document_batch = embeddings.get_document_embeddings(document_batch)
-        neg_document_batch = embeddings.get_document_embeddings(neg_document_batch)
-
         optimizer.zero_grad()
         
         # Compute loss
@@ -133,9 +130,6 @@ for epoch in range(num_epochs):
                        total=len(val_triple_dataloader))
         
         for (val_query_batch, val_documents_batch, val_neg_documents_batch) in val_loop:
-            val_query_batch = embeddings.get_query_embeddings(val_query_batch)
-            val_documents_batch = embeddings.get_document_embeddings(val_documents_batch)
-            val_neg_documents_batch = embeddings.get_document_embeddings(val_neg_documents_batch)
 
             # Compute validation loss
             val_loss = model.compute_loss(val_query_batch, val_documents_batch, val_neg_documents_batch)

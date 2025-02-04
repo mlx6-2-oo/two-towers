@@ -22,4 +22,4 @@ def get_embeddings(texts, max_length):
         tokens = tokens.to(device)
 
         embeddings = model(**tokens).last_hidden_state
-        return embeddings.cpu()
+        return embeddings
