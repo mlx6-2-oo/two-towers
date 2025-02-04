@@ -43,21 +43,26 @@ for query, relevant_passage, irrelevant_passage in training_data:
     
     embeddings_training_data.append((query_embeddings, relevant_embeddings, irrelevant_embeddings))
 
+
 class Tower(nn.Module):
     def __init__(self):
         super().__init__()
-        self.layers = nn.Sequential(
-            nn.Linear(312, 256),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(128, 64)
-        )
-        
+        self.hidden_size = 256
+        self.rnn = nn.RNN(input_size=312, hidden_size=self.hidden_size, batch_first=True)
+        self.fc = nn.Linear(self.hidden_size, 64)  # Final projection to desired output size
+
+    # Input(312) -> RNN(256 hidden) -> Linear (64 output)
     def forward(self, x):
-        return self.layers(x)
+        # Add sequence dimension if not present
+        if len(x.shape) == 2:
+            x = x.unsqueeze(1)  # [batch, features] -> [batch, seq_len=1, features]
+        
+        # Run RNN
+        output, _ = self.rnn(x)  # output shape: [batch, seq_len, hidden_size]
+        
+        # Get final output
+        last_output = output[:, -1, :]  # Take last sequence output
+        return self.fc(last_output)  # Project to final dimension
 
 class TowerOne(Tower):
     pass
