@@ -75,19 +75,23 @@ tower_one = TowerOne()
 tower_two = TowerTwo()
 
 # Process first training example as a test
-query_embeddings, relevant_embeddings, _ = embeddings_training_data[0]
+query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_training_data[0]
 
-# Pass embeddings through towers
-query_tower_output = tower_one(query_embeddings)
-passage_tower_output = tower_two(relevant_embeddings)
+# Pass all embeddings through towers
+query_output = tower_one(query_embeddings)
+relevant_output = tower_two(relevant_embeddings)
+irrelevant_output = tower_two(irrelevant_embeddings)
 
-# Calculate similarity score
-similarity = nn.functional.cosine_similarity(query_tower_output, passage_tower_output, dim=1)
+# Calculate distances
+relevant_distance = 1 - nn.functional.cosine_similarity(query_output, relevant_output, dim=1)
+irrelevant_distance = 1 - nn.functional.cosine_similarity(query_output, irrelevant_output, dim=1)
 
-print(f"\nProcessed first training example:")
-print(f"Query: {training_data[0][0]}")
-print(f"Relevant passage: {training_data[0][1]}")
-print(f"Similarity score: {similarity.item():.4f}")
-print(f"Query embedding shape: {query_tower_output.shape}")
-print(f"Passage embedding shape: {passage_tower_output.shape}")
+# Calculate triplet loss
+margin = 0.2  # You can adjust this
+triplet_loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin)
+
+print(f"\nTriplet Loss Analysis:")
+print(f"Relevant distance: {relevant_distance.item():.4f}")
+print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
+print(f"Triplet loss: {triplet_loss.item():.4f}")
 
