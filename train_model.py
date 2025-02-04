@@ -2,8 +2,6 @@ from data_handling import load_tinybert, get_embeddings
 from rnn import TowerOne, TowerTwo
 from training_helpers import train_towers
 
-model, tokenizer = load_tinybert()
-
 training_data = [
     ("What is a good python test library", "Why Pytest is the best python testing library", "Dogs go wild on boozy night out with kitten"),
     ("How to debug memory leaks", "Advanced memory leak detection in Python", "Top 10 pizza recipes for beginners"),
@@ -23,6 +21,10 @@ training_data = [
     ("MongoDB vs PostgreSQL", "Choosing the right database for your project", "Basic knitting patterns for beginners")
 ]
 
+# Load TinyBERT model and tokenizer
+model, tokenizer = load_tinybert()
+
+# Get embeddings for training data
 embeddings_training_data = get_embeddings(training_data, model, tokenizer)
 
 # Initialize the towers
