@@ -10,36 +10,38 @@ num_epochs = 10
 
 
 class TowerOne(nn.Module):
-    def __init__(self, input_dim=768):  # Default for BERT embeddings
+    def __init__(self, input_dim=768):  # BERT embeddings dimension
         super().__init__()
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, 256),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(128, 64)
+        self.rnn = nn.RNN(
+            input_size=input_dim,
+            hidden_size=128,
+            num_layers=1,
+            batch_first=True,
+            dropout=0.1  # Less dropout for shorter sequences
         )
+        self.fc = nn.Linear(128, 64)
 
     def forward(self, x):
-        return self.model(x)
+        # x shape: (batch_size, ~20, bert_dim) for queries
+        _, hidden = self.rnn(x)
+        return self.fc(hidden[-1])
 
 class TowerTwo(nn.Module):
-    def __init__(self, input_dim=768):  # Default for BERT embeddings
+    def __init__(self, input_dim=768):  # BERT embeddings dimension
         super().__init__()
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, 256),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(128, 64)
+        self.rnn = nn.RNN(
+            input_size=input_dim,
+            hidden_size=256,  # Larger hidden size for longer sequences
+            num_layers=2,     # More layers to capture document structure
+            batch_first=True,
+            dropout=0.2       # More dropout for longer sequences
         )
+        self.fc = nn.Linear(256, 64)  # Project down to same size as TowerOne
 
     def forward(self, x):
-        return self.model(x)
+        # x shape: (batch_size, ~200, bert_dim) for documents
+        _, hidden = self.rnn(x)
+        return self.fc(hidden[-1])
 
 class DualTowerModel(nn.Module):
     def __init__(self):

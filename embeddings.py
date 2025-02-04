@@ -8,17 +8,17 @@ model.eval()
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 model.to(device)
 
-def get_query_embeddings(queries):
-    return get_embeddings(queries)
+def get_query_embeddings(queries, max_length):
+    return get_embeddings(queries, max_length)
 
 
-def get_document_embeddings(documents):
-    return get_embeddings(documents)
+def get_document_embeddings(documents, max_length):
+    return get_embeddings(documents, max_length)
 
 
-def get_embeddings(texts):
-    tokens = tokenizer(texts, return_tensors="pt", padding=True)
+def get_embeddings(texts, max_length):
+    tokens = tokenizer(texts, return_tensors="pt", padding="max_length", truncation=True, max_length=max_length)
     tokens = tokens.to(device)
 
-    embeddings = model(**tokens).last_hidden_state.mean(dim=1)
+    embeddings = model(**tokens).last_hidden_state
     return embeddings.cpu()
