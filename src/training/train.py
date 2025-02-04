@@ -1,12 +1,7 @@
 import torch
-import argparse
 from ..models.towers import TowerOne, TowerTwo
 from .trainer import train_towers
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Train the two-tower model')
-    parser.add_argument('--wandb', action='store_true', help='Enable Weights & Biases logging')
-    return parser.parse_args()
+from ..utils.args import parse_wandb_args
 
 def train_model(use_wandb=False):
     """Train the two-tower model using pre-computed embeddings."""
@@ -33,5 +28,5 @@ def train_model(use_wandb=False):
     )
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_wandb_args("Train the two-tower model")
     train_model(use_wandb=args.wandb) 

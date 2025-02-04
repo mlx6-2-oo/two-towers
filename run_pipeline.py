@@ -1,15 +1,10 @@
 import os
-import argparse
 from src.data.generate_embeddings import generate_and_save_embeddings
 from src.training.train import train_model
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Run the complete two-tower pipeline')
-    parser.add_argument('--wandb', action='store_true', help='Enable Weights & Biases logging')
-    return parser.parse_args()
+from src.utils.args import parse_wandb_args
 
 def main():
-    args = parse_args()
+    args = parse_wandb_args("Run the complete two-tower pipeline")
     
     # Step 1: Generate embeddings if they don't exist
     if not os.path.exists('embeddings.pt'):
