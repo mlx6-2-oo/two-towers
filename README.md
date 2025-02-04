@@ -33,8 +33,10 @@ python -m src.data.generate_embeddings
 2. Train with existing embeddings
 ```bash
 python -m src.training.train
+python -m src.training.train --wandb # save results to wandb
 ```
-3. Run the full pipeline
+1. Run the full pipeline
 ```bash
 python run_pipeline.py
+python run_pipeline.py --wandb # save results to wandb
 ```
