@@ -68,6 +68,8 @@ def get_embeddings(df, name):
         for passages in passages_lists
     )
     print(f"Max passage length: {max_passage_length}")
+
+    base_path = os.path.join(script_dir, f"./sources/{name}_embeddings")
     
     with torch.no_grad():
         # Process queries
@@ -78,12 +80,19 @@ def get_embeddings(df, name):
             batch_embeddings = embeddings.get_query_embeddings(batch, max_query_length)
             query_embeddings.extend(batch_embeddings)
 
+        # Save embeddings to disk
+        print("Saving embeddings to disk...")
+        torch.save(query_embeddings, base_path + "_queries.pt")
+
         # Process documents
         print("Processing documents...")
         document_list_embeddings = []
         for passages in tqdm(passages_lists):
             passages_embeddings = embeddings.get_document_embeddings(passages, max_passage_length)
             document_list_embeddings.append(passages_embeddings)
+
+        print("Saving document embeddings to disk...")
+        torch.save(document_list_embeddings, base_path + "_docs.pt")
 
     # Create pairs
     pairs = []
@@ -92,12 +101,6 @@ def get_embeddings(df, name):
         for doc_embedding in document_embeddings:
             pairs.append((query_embedding.detach().clone(), doc_embedding.detach().clone()))
             doc_embeddings.append(doc_embedding.detach().clone())
-    
-    # Save embeddings to disk
-    print("Saving embeddings to disk...")
-    base_path = os.path.join(script_dir, f"./sources/{name}_embeddings")
-    torch.save(pairs, base_path + "_pairs.pt")
-    torch.save(doc_embeddings, base_path + "_docs.pt")
     
     return PairDataset(pairs), DocumentDataset(doc_embeddings)
 
