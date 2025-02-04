@@ -31,4 +31,4 @@ embeddings_training_data = get_embeddings(training_data, model, tokenizer)
 tower_one = TowerOne()
 tower_two = TowerTwo()
 
-train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2, lr=0.001)
+train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=False)
