@@ -16,14 +16,17 @@ def wandb_init(lr, margin, num_epochs, hidden_size):
         }
     )
 
-def wandb_log_epoch(epoch, avg_loss, avg_relevant_dist, avg_irrelevant_dist):
-    wandb.log({
+def wandb_log_epoch(epoch, avg_loss, avg_relevant_dist, avg_irrelevant_dist, val_loss):
+    metrics = {
         "epoch": epoch,
-        "loss": avg_loss,
-        "relevant_distance": avg_relevant_dist,
-        "irrelevant_distance": avg_irrelevant_dist,
-        "distance_gap": avg_irrelevant_dist - avg_relevant_dist
-    })
+        "train_loss": avg_loss,
+        "train_relevant_distance": avg_relevant_dist,
+        "train_irrelevant_distance": avg_irrelevant_dist,
+        "train_distance_gap": avg_irrelevant_dist - avg_relevant_dist,
+        "val_loss": val_loss
+    }
+
+    wandb.log(metrics)
 
 def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
     query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_batch
@@ -42,7 +45,15 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
 
     return triplet_loss, relevant_distance.item(), irrelevant_distance.item()
 
-def train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=False):
+def calculate_validation_loss(tower_one, tower_two, validation_data, margin):
+    total_loss = 0
+    with torch.no_grad():  # No need to track gradients for validation
+        for batch in validation_data:
+            loss, _, _ = calculate_batch_loss(tower_one, tower_two, batch, margin)
+            total_loss += loss.item()
+    return total_loss / len(validation_data)
+
+def train_towers(tower_one, tower_two, embeddings_training_data, validation_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=False):
     if use_wandb:
         wandb_init(lr, margin, num_epochs, tower_one.hidden_size)
 
@@ -71,7 +82,10 @@ def train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, 
         avg_relevant_dist = avg_relevant_dist / len(embeddings_training_data)
         avg_irrelevant_dist = avg_irrelevant_dist / len(embeddings_training_data)
         
+        # Calculate validation loss if validation data provided
+        val_loss = calculate_validation_loss(tower_one, tower_two, validation_data, margin)
+        
         if use_wandb:
-            wandb_log_epoch(epoch + 1, avg_loss, avg_relevant_dist, avg_irrelevant_dist)
+            wandb_log_epoch(epoch + 1, avg_loss, avg_relevant_dist, avg_irrelevant_dist, val_loss)
 
-        print(f"Epoch {epoch+1}, Average Loss: {avg_loss:.4f}, Rel Dist: {avg_relevant_dist:.4f}, Irrel Dist: {avg_irrelevant_dist:.4f}")
+        print(f"Epoch {epoch+1}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}")

@@ -21,14 +21,28 @@ training_data = [
     ("MongoDB vs PostgreSQL", "Choosing the right database for your project", "Basic knitting patterns for beginners")
 ]
 
+validation_data = [
+    ("How to optimize Python code", "Advanced Python performance tuning guide", "Making homemade ice cream"),
+    ("Git branching strategies", "Git workflow best practices for teams", "Popular bird watching locations"),
+    ("SQL query optimization", "Database query performance tuning", "Beginner's guide to origami"),
+    ("Load balancing techniques", "Scaling web applications with load balancers", "History of jazz music"),
+    ("Monitoring microservices", "Observability patterns for distributed systems", "Indoor herb garden tips"),
+    ("OAuth2 implementation guide", "Secure authentication protocols explained", "Famous French painters"),
+    ("Redis caching strategies", "Implementing efficient caching layers", "Caring for indoor succulents"),
+    ("Elasticsearch best practices", "Search engine optimization patterns", "Traditional Thai cooking"),
+    ("Message queue architectures", "Asynchronous communication patterns", "Rock climbing for beginners"),
+    ("Infrastructure as code", "Terraform and cloud provisioning", "Making artisanal cheese")
+]
+
 # Load TinyBERT model and tokenizer
 model, tokenizer = load_tinybert()
 
 # Get embeddings for training data
 embeddings_training_data = get_embeddings(training_data, model, tokenizer)
+embeddings_validation_data = get_embeddings(validation_data, model, tokenizer)
 
 # Initialize the towers
 tower_one = TowerOne()
 tower_two = TowerTwo()
 
-train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=False)
+train_towers(tower_one, tower_two, embeddings_training_data, embeddings_validation_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=True)
