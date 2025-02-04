@@ -74,24 +74,24 @@ class TowerTwo(Tower):
 tower_one = TowerOne()
 tower_two = TowerTwo()
 
-# Process first training example as a test
-query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_training_data[0]
+def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
+    query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_batch
 
-# Pass all embeddings through towers
-query_output = tower_one(query_embeddings)
-relevant_output = tower_two(relevant_embeddings)
-irrelevant_output = tower_two(irrelevant_embeddings)
+    # Pass all embeddings through towers
+    query_output = tower_one(query_embeddings)
+    relevant_output = tower_two(relevant_embeddings)
+    irrelevant_output = tower_two(irrelevant_embeddings)
 
-# Calculate distances
-relevant_distance = 1 - nn.functional.cosine_similarity(query_output, relevant_output, dim=1)
-irrelevant_distance = 1 - nn.functional.cosine_similarity(query_output, irrelevant_output, dim=1)
+    # Calculate distances
+    relevant_distance = 1 - nn.functional.cosine_similarity(query_output, relevant_output, dim=1)
+    irrelevant_distance = 1 - nn.functional.cosine_similarity(query_output, irrelevant_output, dim=1)
 
-# Calculate triplet loss
-margin = 0.2  # You can adjust this
-triplet_loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin)
+    # Calculate triplet loss
+    triplet_loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin)
+    
+    print(f"\nTriplet Loss Analysis:")
+    print(f"Relevant distance: {relevant_distance.item():.4f}")
+    print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
+    print(f"Triplet loss: {triplet_loss.item():.4f}")
 
-print(f"\nTriplet Loss Analysis:")
-print(f"Relevant distance: {relevant_distance.item():.4f}")
-print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
-print(f"Triplet loss: {triplet_loss.item():.4f}")
-
+calculate_batch_loss(tower_one, tower_two, embeddings_training_data[0], margin=0.2)
