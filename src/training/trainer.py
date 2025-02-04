@@ -45,6 +45,8 @@ def train_towers(tower_one, tower_two, embeddings_training_data, validation_data
         {'params': tower_two.parameters()}
     ], lr=lr)
 
+    best_val_loss = float('inf')
+    
     for epoch in range(num_epochs):
         total_loss = 0
         avg_relevant_dist = 0
@@ -83,4 +85,15 @@ def train_towers(tower_one, tower_two, embeddings_training_data, validation_data
                 "train_distance_gap": avg_irrelevant_dist - avg_relevant_dist
             })
 
-        print(f"Epoch {epoch+1}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}") 
+        print(f"Epoch {epoch+1}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}")
+        
+        # Save best model based on validation loss
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            torch.save(tower_one.state_dict(), 'src/models/tower_one.pt')
+            torch.save(tower_two.state_dict(), 'src/models/tower_two.pt')
+            if use_wandb:
+                wandb.save('src/models/tower_one.pt')
+                wandb.save('src/models/tower_two.pt')
+                
+    print(f"\nTraining complete. Best validation loss: {best_val_loss:.4f}") 
