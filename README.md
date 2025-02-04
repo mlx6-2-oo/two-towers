@@ -32,7 +32,7 @@ python -m src.data.generate_embeddings
 ```
 2. Train with existing embeddings
 ```bash
-python train.py
+python -m src.training.train
 ```
 3. Run the full pipeline
 ```bash

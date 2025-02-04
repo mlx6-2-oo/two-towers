@@ -1,5 +1,6 @@
 import os
 from src.data.generate_embeddings import generate_and_save_embeddings
+from src.training.train import train_model
 
 def main():
     # Step 1: Generate embeddings if they don't exist
@@ -11,7 +12,7 @@ def main():
     
     # Step 2: Run training
     print("\nStarting training...")
-    os.system('python train.py')
+    train_model(use_wandb=False)
 
 if __name__ == "__main__":
     main() 
