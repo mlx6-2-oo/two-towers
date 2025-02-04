@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 # Set the specific Python version you want to use
 PYTHON_VERSION="3.11.11"
 
@@ -73,5 +71,3 @@ if [ -f "requirements.txt" ]; then
 else
   echo "requirements.txt file not found. Skipping pip install."
 fi
-
-echo "Setup complete!"
