@@ -47,4 +47,8 @@ validation_data = [
     ("Git branching strategies", "Git workflow best practices for teams", "Popular bird watching locations"),
     ("SQL query optimization", "Database query performance tuning", "Beginner's guide to origami"),
     # ... rest of validation data
-] 
+]
+
+# # Load real training and validation data from MS MARCO
+# training_data = load_msmarco(split="train", max_samples=1000)  # Adjust max_samples as needed
+# validation_data = load_msmarco(split="validation", max_samples=100)
