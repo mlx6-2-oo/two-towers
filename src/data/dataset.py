@@ -34,21 +34,34 @@ def get_embeddings(data, model, tokenizer):
     
     return embeddings
 
-# Example training and validation data
-training_data = [
+mock_training_data = [
     ("What is a good python test library", "Why Pytest is the best python testing library", "Dogs go wild on boozy night out with kitten"),
     ("How to debug memory leaks", "Advanced memory leak detection in Python", "Top 10 pizza recipes for beginners"),
     ("Best practices for API design", "RESTful API design patterns and principles", "Ancient Egyptian burial customs"),
-    # ... rest of training data
+    ("Python async programming guide", "Understanding asyncio and coroutines", "The history of medieval warfare"),
+    ("Docker container security", "Securing Docker containers in production", "Best houseplants for your bedroom"),
+    ("Machine learning deployment", "MLOps best practices and deployment strategies", "Traditional Irish folk songs"),
+    ("Kubernetes vs Docker Swarm", "Container orchestration platforms compared", "Making the perfect sourdough bread"),
+    ("GraphQL vs REST APIs", "Modern API architectural patterns", "Top fishing spots in Canada"),
+    ("Microservices architecture patterns", "Building resilient microservices", "Ancient Roman cooking techniques"),
+    ("Database indexing strategies", "Optimizing database performance", "Training your pet parrot"),
+    ("CI/CD pipeline setup", "Automated deployment workflow guide", "History of Renaissance art"),
+    ("Web security best practices", "Preventing common web vulnerabilities", "Growing tomatoes in your garden"),
+    ("Cloud cost optimization", "Reducing AWS infrastructure costs", "Best hiking trails in Colorado"),
+    ("Serverless architecture guide", "AWS Lambda and serverless computing", "Vintage car restoration tips"),
+    ("Data streaming with Kafka", "Real-time data processing patterns", "Traditional Japanese tea ceremonies"),
+    ("MongoDB vs PostgreSQL", "Choosing the right database for your project", "Basic knitting patterns for beginners")
 ]
 
-validation_data = [
+mock_validation_data = [
     ("How to optimize Python code", "Advanced Python performance tuning guide", "Making homemade ice cream"),
     ("Git branching strategies", "Git workflow best practices for teams", "Popular bird watching locations"),
     ("SQL query optimization", "Database query performance tuning", "Beginner's guide to origami"),
-    # ... rest of validation data
+    ("Load balancing techniques", "Scaling web applications with load balancers", "History of jazz music"),
+    ("Monitoring microservices", "Observability patterns for distributed systems", "Indoor herb garden tips"),
+    ("OAuth2 implementation guide", "Secure authentication protocols explained", "Famous French painters"),
+    ("Redis caching strategies", "Implementing efficient caching layers", "Caring for indoor succulents"),
+    ("Elasticsearch best practices", "Search engine optimization patterns", "Traditional Thai cooking"),
+    ("Message queue architectures", "Asynchronous communication patterns", "Rock climbing for beginners"),
+    ("Infrastructure as code", "Terraform and cloud provisioning", "Making artisanal cheese")
 ]
-
-# # Load real training and validation data from MS MARCO
-# training_data = load_msmarco(split="train", max_samples=1000)  # Adjust max_samples as needed
-# validation_data = load_msmarco(split="validation", max_samples=100)
