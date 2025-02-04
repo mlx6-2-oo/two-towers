@@ -1,16 +1,16 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from dataset import get_training_pairs, get_validation_pairs
+from dataset import get_datasets
 from tqdm import tqdm
 import wandb
-
-batch_size = 3
+import embeddings
+batch_size = 256
 num_epochs = 10
 
 
 class TowerOne(nn.Module):
-    def __init__(self, input_dim=768):  # BERT embeddings dimension
+    def __init__(self, input_dim=312):
         super().__init__()
         self.rnn = nn.RNN(
             input_size=input_dim,
@@ -27,7 +27,7 @@ class TowerOne(nn.Module):
         return self.fc(hidden[-1])
 
 class TowerTwo(nn.Module):
-    def __init__(self, input_dim=768):  # BERT embeddings dimension
+    def __init__(self, input_dim=312):
         super().__init__()
         self.rnn = nn.RNN(
             input_size=input_dim,
@@ -86,15 +86,12 @@ optimizer = torch.optim.Adam(model.parameters())
 
 # Get datasets and dataloaders
 print("Loading training data...")
-pairs, documents = get_training_pairs()
-pairs_dataloader = DataLoader(pairs, batch_size=batch_size, shuffle=True)
-documents_dataloader = DataLoader(documents, batch_size=batch_size, shuffle=True)
-
+triple_dataset = get_datasets("train")
+triple_dataloader = DataLoader(triple_dataset, batch_size=batch_size, shuffle=True)
 
 print("Loading validation data...")
-val_pairs, val_documents = get_validation_pairs()
-val_pairs_dataloader = DataLoader(val_pairs, batch_size=batch_size)
-val_documents_dataloader = DataLoader(val_documents, batch_size=batch_size)
+val_triple_dataset = get_datasets("validation")
+val_triple_dataloader = DataLoader(val_triple_dataset, batch_size=batch_size)
 
 wandb.init(project="two-towers", config={"batch_size": batch_size, "num_epochs": num_epochs, "learning_rate": optimizer.param_groups[0]["lr"]})
 
@@ -103,11 +100,15 @@ for epoch in range(num_epochs):
     model.train()
     batch_losses = []
 
-    train_loop = tqdm(zip(pairs_dataloader, documents_dataloader), 
+    train_loop = tqdm(triple_dataloader, 
                      desc=f'Epoch {epoch+1}/{num_epochs}',
-                     total=len(pairs_dataloader))
+                     total=len(triple_dataloader))
     
-    for batch_idx, ((query_batch, document_batch), neg_document_batch) in enumerate(train_loop):
+    for batch_idx, (query_batch, document_batch, neg_document_batch) in enumerate(train_loop):
+        query_batch = embeddings.get_query_embeddings(query_batch)
+        document_batch = embeddings.get_document_embeddings(document_batch)
+        neg_document_batch = embeddings.get_document_embeddings(neg_document_batch)
+
         optimizer.zero_grad()
         
         # Compute loss
@@ -118,7 +119,7 @@ for epoch in range(num_epochs):
         
         batch_losses.append(loss.item())
         train_loop.set_postfix(loss=f'{loss.item():.4f}')
-        # wandb.log({"batch_loss": loss.item(), "batch": batch_idx + epoch * len(pairs_dataloader)})
+        wandb.log({"batch_loss": loss.item(), "batch": batch_idx + epoch * len(triple_dataloader)})
     
     train_loss = sum(batch_losses) / len(batch_losses)
 
@@ -127,11 +128,15 @@ for epoch in range(num_epochs):
     with torch.no_grad():
         model.eval()
         
-        val_loop = tqdm(zip(val_pairs_dataloader, val_documents_dataloader),
+        val_loop = tqdm(val_triple_dataloader,
                        desc='Validation',
-                       total=len(val_pairs_dataloader))
+                       total=len(val_triple_dataloader))
         
-        for (val_query_batch, val_documents_batch), val_neg_documents_batch in val_loop:
+        for (val_query_batch, val_documents_batch, val_neg_documents_batch) in val_loop:
+            val_query_batch = embeddings.get_query_embeddings(val_query_batch)
+            val_documents_batch = embeddings.get_document_embeddings(val_documents_batch)
+            val_neg_documents_batch = embeddings.get_document_embeddings(val_neg_documents_batch)
+
             # Compute validation loss
             val_loss = model.compute_loss(val_query_batch, val_documents_batch, val_neg_documents_batch)
             
