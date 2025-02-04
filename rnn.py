@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from load_tinybert import load_tinybert
+from data_handling import load_tinybert
 
 model, tokenizer = load_tinybert()
 
@@ -23,26 +23,29 @@ training_data = [
     ("MongoDB vs PostgreSQL", "Choosing the right database for your project", "Basic knitting patterns for beginners")
 ]
 
-embeddings_training_data = []
+def get_embeddings():
+    embeddings = []
+    for query, relevant_passage, irrelevant_passage in training_data:
+        # Get query embeddings
+        query_tokens = tokenizer(query, return_tensors="pt", padding=True, truncation=True)
+        query_outputs = model(**query_tokens)
+        query_embeddings = query_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+        
+        # Get relevant passage embeddings
+        relevant_tokens = tokenizer(relevant_passage, return_tensors="pt", padding=True, truncation=True)
+        relevant_outputs = model(**relevant_tokens)
+        relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+        
+        # Get irrelevant passage embeddings
+        irrelevant_tokens = tokenizer(irrelevant_passage, return_tensors="pt", padding=True, truncation=True)
+        irrelevant_outputs = model(**irrelevant_tokens)
+        irrelevant_embeddings = irrelevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+        
+        embeddings.append((query_embeddings, relevant_embeddings, irrelevant_embeddings))
 
-for query, relevant_passage, irrelevant_passage in training_data:
-    # Get query embeddings
-    query_tokens = tokenizer(query, return_tensors="pt", padding=True, truncation=True)
-    query_outputs = model(**query_tokens)
-    query_embeddings = query_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
-    
-    # Get relevant passage embeddings
-    relevant_tokens = tokenizer(relevant_passage, return_tensors="pt", padding=True, truncation=True)
-    relevant_outputs = model(**relevant_tokens)
-    relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
-    
-    # Get irrelevant passage embeddings
-    irrelevant_tokens = tokenizer(irrelevant_passage, return_tensors="pt", padding=True, truncation=True)
-    irrelevant_outputs = model(**irrelevant_tokens)
-    irrelevant_embeddings = irrelevant_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
-    
-    embeddings_training_data.append((query_embeddings, relevant_embeddings, irrelevant_embeddings))
+    return embeddings
 
+embeddings_training_data = get_embeddings()
 
 class Tower(nn.Module):
     def __init__(self):
