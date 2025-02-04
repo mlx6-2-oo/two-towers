@@ -18,7 +18,7 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
 
     return triplet_loss
 
-def train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2):
+def train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2, lr=0.001):
     optimizer = torch.optim.Adam([
         {'params': tower_one.parameters()},
         {'params': tower_two.parameters()}
