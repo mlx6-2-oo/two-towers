@@ -7,7 +7,6 @@ class Tower(nn.Module):
         self.rnn = nn.RNN(input_size=312, hidden_size=self.hidden_size, batch_first=True)
         self.fc = nn.Linear(self.hidden_size, 64)  # Final projection to desired output size
 
-    # Input(312) -> RNN(256 hidden) -> Linear (64 output)
     def forward(self, x):
         # Add sequence dimension if not present
         if len(x.shape) == 2:
@@ -24,4 +23,4 @@ class TowerOne(Tower):
     pass
 
 class TowerTwo(Tower):
-    pass
+    pass 

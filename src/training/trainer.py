@@ -3,9 +3,10 @@ import torch.nn as nn
 import wandb
 
 def wandb_init(lr, margin, num_epochs, hidden_size):
+    """Initialize Weights & Biases logging."""
     wandb.init(
         project="two-towers",
-        name='mode-training',
+        name='model-training',
         config={
             "architecture": "RNN-TinyBERT",
             "learning_rate": lr,
@@ -16,19 +17,8 @@ def wandb_init(lr, margin, num_epochs, hidden_size):
         }
     )
 
-def wandb_log_epoch(epoch, avg_loss, avg_relevant_dist, avg_irrelevant_dist, val_loss):
-    metrics = {
-        "epoch": epoch,
-        "train_loss": avg_loss,
-        "train_relevant_distance": avg_relevant_dist,
-        "train_irrelevant_distance": avg_irrelevant_dist,
-        "train_distance_gap": avg_irrelevant_dist - avg_relevant_dist,
-        "val_loss": val_loss
-    }
-
-    wandb.log(metrics)
-
 def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
+    """Calculate triplet loss for a batch of embeddings."""
     query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_batch
 
     # Pass all embeddings through towers
@@ -45,15 +35,8 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
 
     return triplet_loss, relevant_distance.item(), irrelevant_distance.item()
 
-def calculate_validation_loss(tower_one, tower_two, validation_data, margin):
-    total_loss = 0
-    with torch.no_grad():  # No need to track gradients for validation
-        for batch in validation_data:
-            loss, _, _ = calculate_batch_loss(tower_one, tower_two, batch, margin)
-            total_loss += loss.item()
-    return total_loss / len(validation_data)
-
 def train_towers(tower_one, tower_two, embeddings_training_data, validation_data, num_epochs=10, margin=0.2, lr=0.001, use_wandb=False):
+    """Train the two-tower model."""
     if use_wandb:
         wandb_init(lr, margin, num_epochs, tower_one.hidden_size)
 
@@ -77,15 +60,27 @@ def train_towers(tower_one, tower_two, embeddings_training_data, validation_data
             avg_relevant_dist += rel_dist
             avg_irrelevant_dist += irrel_dist
 
-        # Calculate epoch metrics
+        # Calculate metrics
         avg_loss = total_loss / len(embeddings_training_data)
         avg_relevant_dist = avg_relevant_dist / len(embeddings_training_data)
         avg_irrelevant_dist = avg_irrelevant_dist / len(embeddings_training_data)
         
-        # Calculate validation loss if validation data provided
-        val_loss = calculate_validation_loss(tower_one, tower_two, validation_data, margin)
+        # Calculate validation loss
+        val_loss = 0
+        with torch.no_grad():
+            for batch in validation_data:
+                loss, _, _ = calculate_batch_loss(tower_one, tower_two, batch, margin)
+                val_loss += loss.item()
+        val_loss /= len(validation_data)
         
         if use_wandb:
-            wandb_log_epoch(epoch + 1, avg_loss, avg_relevant_dist, avg_irrelevant_dist, val_loss)
+            wandb.log({
+                "epoch": epoch + 1,
+                "train_loss": avg_loss,
+                "val_loss": val_loss,
+                "train_relevant_distance": avg_relevant_dist,
+                "train_irrelevant_distance": avg_irrelevant_dist,
+                "train_distance_gap": avg_irrelevant_dist - avg_relevant_dist
+            })
 
-        print(f"Epoch {epoch+1}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}")
+        print(f"Epoch {epoch+1}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}") 
