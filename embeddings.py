@@ -1,8 +1,8 @@
 from transformers import AutoTokenizer, BertModel
 import torch
 
-tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased', use_fast=True)
-model = BertModel.from_pretrained('bert-base-uncased')
+tokenizer = AutoTokenizer.from_pretrained('huawei-noah/TinyBERT_General_4L_312D', use_fast=True)
+model = BertModel.from_pretrained('huawei-noah/TinyBERT_General_4L_312D')
 model.eval()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
