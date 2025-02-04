@@ -89,9 +89,29 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
     # Calculate triplet loss
     triplet_loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin)
     
-    print(f"\nTriplet Loss Analysis:")
-    print(f"Relevant distance: {relevant_distance.item():.4f}")
-    print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
-    print(f"Triplet loss: {triplet_loss.item():.4f}")
+    # print(f"\nTriplet Loss Analysis:")
+    # print(f"Relevant distance: {relevant_distance.item():.4f}")
+    # print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
+    # print(f"Triplet loss: {triplet_loss.item():.4f}")
 
-calculate_batch_loss(tower_one, tower_two, embeddings_training_data[0], margin=0.2)
+    return triplet_loss
+
+# Setup optimizer
+optimizer = torch.optim.Adam([
+    {'params': tower_one.parameters()},
+    {'params': tower_two.parameters()}
+], lr=0.001)
+
+# Simple training loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    total_loss = 0
+    
+    for batch in embeddings_training_data:
+        optimizer.zero_grad()
+        loss = calculate_batch_loss(tower_one, tower_two, batch, margin=0.2)
+        loss.backward(retain_graph=True)
+        optimizer.step()
+        total_loss += loss.item()
+    
+    print(f"Epoch {epoch+1}, Average Loss: {total_loss/len(embeddings_training_data):.4f}")
