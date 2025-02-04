@@ -5,7 +5,7 @@ from dataset import get_datasets
 from tqdm import tqdm
 import wandb
 import embeddings
-batch_size = 256
+batch_size = 512
 num_epochs = 10
 
 
@@ -52,7 +52,7 @@ class DualTowerModel(nn.Module):
     def prepare_batch(self, query_batch, document_batch, negative_document_batch):
         query_embeddings = embeddings.get_query_embeddings(query_batch).to(device)
         positive_doc_embeddings = embeddings.get_document_embeddings(document_batch).to(device)
-        negative_doc_embeddings = embeddings.get_document_embeddings(neg_document_batch).to(device)
+        negative_doc_embeddings = embeddings.get_document_embeddings(negative_document_batch).to(device)
 
         return query_embeddings, positive_doc_embeddings, negative_doc_embeddings
         
