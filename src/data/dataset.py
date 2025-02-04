@@ -1,5 +1,6 @@
 from transformers import AutoModel, AutoTokenizer
 import torch
+from tqdm import tqdm
 
 def load_tinybert():
     """Load TinyBERT model and tokenizer from Hugging Face."""
@@ -10,14 +11,19 @@ def load_tinybert():
     print(f"Loading model from {model_name}...")
     model = AutoModel.from_pretrained(model_name)
     
+    # Move model to GPU if available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    
     return model, tokenizer
 
 def get_embeddings(data, model, tokenizer, batch_size=32):
     """Convert text data into embeddings using TinyBERT with batch processing."""
     embeddings = []
+    device = model.device  # Get the device model is on
     
-    # Process data in batches
-    for i in range(0, len(data), batch_size):
+    # Process data in batches with progress bar
+    for i in tqdm(range(0, len(data), batch_size), desc="Generating embeddings"):
         batch = data[i:i + batch_size]
         
         # Prepare batch inputs
@@ -26,32 +32,29 @@ def get_embeddings(data, model, tokenizer, batch_size=32):
         irrelevant_passages = [item[2] for item in batch]
         
         # Get embeddings for each type in batch
-        with torch.no_grad():  # No need to track gradients for embeddings
+        with torch.no_grad():
             # Process queries
-            query_tokens = tokenizer(queries, return_tensors="pt", padding=True, truncation=True)
+            query_tokens = tokenizer(queries, return_tensors="pt", padding=True, truncation=True).to(device)
             query_outputs = model(**query_tokens)
-            query_embeddings = query_outputs.last_hidden_state[:, 0, :]  # Using [CLS] token embedding
+            query_embeddings = query_outputs.last_hidden_state[:, 0, :].cpu()  # Move back to CPU
             
             # Process relevant passages
-            relevant_tokens = tokenizer(relevant_passages, return_tensors="pt", padding=True, truncation=True)
+            relevant_tokens = tokenizer(relevant_passages, return_tensors="pt", padding=True, truncation=True).to(device)
             relevant_outputs = model(**relevant_tokens)
-            relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :]
+            relevant_embeddings = relevant_outputs.last_hidden_state[:, 0, :].cpu()
             
             # Process irrelevant passages
-            irrelevant_tokens = tokenizer(irrelevant_passages, return_tensors="pt", padding=True, truncation=True)
+            irrelevant_tokens = tokenizer(irrelevant_passages, return_tensors="pt", padding=True, truncation=True).to(device)
             irrelevant_outputs = model(**irrelevant_tokens)
-            irrelevant_embeddings = irrelevant_outputs.last_hidden_state[:, 0, :]
+            irrelevant_embeddings = irrelevant_outputs.last_hidden_state[:, 0, :].cpu()
         
         # Add batch results to embeddings list
         for j in range(len(batch)):
             embeddings.append((
-                query_embeddings[j:j+1],  # Keep batch dimension
+                query_embeddings[j:j+1],
                 relevant_embeddings[j:j+1],
                 irrelevant_embeddings[j:j+1]
             ))
-        
-        if (i + batch_size) % 100 == 0:
-            print(f"Processed {i + batch_size} examples...")
     
     return embeddings
 
