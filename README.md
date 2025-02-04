@@ -23,3 +23,18 @@ This repository includes a setup script to help you get started quickly.
    - Install the dependencies specified in `requirements.txt`
 
 - To share Python package dependency requirements with others, run `pip freeze > requirements.txt` and commit any changes to `requirements.txt` to the repo
+
+## Training Instructions
+
+1. Generate embeddings only:
+```bash
+python -m src.data.generate_embeddings
+```
+2. Train with existing embeddings
+```bash
+python train.py
+```
+3. Run the full pipeline
+```bash
+python run_pipeline.py
+```
