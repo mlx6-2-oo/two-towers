@@ -88,11 +88,6 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
 
     # Calculate triplet loss
     triplet_loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin)
-    
-    # print(f"\nTriplet Loss Analysis:")
-    # print(f"Relevant distance: {relevant_distance.item():.4f}")
-    # print(f"Irrelevant distance: {irrelevant_distance.item():.4f}")
-    # print(f"Triplet loss: {triplet_loss.item():.4f}")
 
     return triplet_loss
 
