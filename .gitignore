@@ -1,6 +1,7 @@
 #project-specific ignores
 venv
 .python-version
+model/dataset_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
