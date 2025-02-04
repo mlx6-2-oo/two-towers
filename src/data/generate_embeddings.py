@@ -24,4 +24,4 @@ def generate_and_save_embeddings(train_samples=10, val_samples=5):
     print("Embeddings saved to embeddings.pt")
 
 if __name__ == "__main__":
-    generate_and_save_embeddings() 
+    generate_and_save_embeddings(10, 5)
