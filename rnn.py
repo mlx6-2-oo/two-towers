@@ -1,5 +1,4 @@
 import torch.nn as nn
-from data_handling import load_tinybert, get_embeddings
 
 class Tower(nn.Module):
     def __init__(self):
