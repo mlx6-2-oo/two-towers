@@ -70,10 +70,6 @@ class TowerOne(Tower):
 class TowerTwo(Tower):
     pass
 
-# Initialize the towers
-tower_one = TowerOne()
-tower_two = TowerTwo()
-
 def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
     query_embeddings, relevant_embeddings, irrelevant_embeddings = embeddings_batch
 
@@ -91,22 +87,26 @@ def calculate_batch_loss(tower_one, tower_two, embeddings_batch, margin):
 
     return triplet_loss
 
-# Setup optimizer
-optimizer = torch.optim.Adam([
-    {'params': tower_one.parameters()},
-    {'params': tower_two.parameters()}
-], lr=0.001)
+def train_towers(tower_one, tower_two, embeddings_training_data, num_epochs=10, margin=0.2):
+    optimizer = torch.optim.Adam([
+        {'params': tower_one.parameters()},
+        {'params': tower_two.parameters()}
+    ], lr=0.001)
 
-# Simple training loop
-num_epochs = 10
-for epoch in range(num_epochs):
-    total_loss = 0
-    
-    for batch in embeddings_training_data:
-        optimizer.zero_grad()
-        loss = calculate_batch_loss(tower_one, tower_two, batch, margin=0.2)
-        loss.backward(retain_graph=True)
-        optimizer.step()
-        total_loss += loss.item()
-    
-    print(f"Epoch {epoch+1}, Average Loss: {total_loss/len(embeddings_training_data):.4f}")
+    for epoch in range(num_epochs):
+        total_loss = 0
+
+        for batch in embeddings_training_data:
+            optimizer.zero_grad()
+            loss = calculate_batch_loss(tower_one, tower_two, batch, margin)
+            loss.backward(retain_graph=True)
+            optimizer.step()
+            total_loss += loss.item()
+
+        print(f"Epoch {epoch+1}, Average Loss: {total_loss/len(embeddings_training_data):.4f}")
+
+# Initialize the towers
+tower_one = TowerOne()
+tower_two = TowerTwo()
+
+train_towers(tower_one, tower_two, embeddings_training_data, 10, 0.2)
