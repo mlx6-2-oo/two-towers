@@ -23,3 +23,7 @@ This repository includes a setup script to help you get started quickly.
    - Install the dependencies specified in `requirements.txt`
 
 - To share Python package dependency requirements with others, run `pip freeze > requirements.txt` and commit any changes to `requirements.txt` to the repo
+
+- To train the model, run `python train.py`
+- To build the document embedding cache, run `python build_doc_embedding_cache.py`
+- To run the inference server, run `uvicorn inference:app --reload`
