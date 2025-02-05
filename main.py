@@ -7,7 +7,7 @@ import wandb
 import embeddings
 batch_size = 512
 num_epochs = 10
-margin = 0.5
+margin = 0.3
 
 
 torch.manual_seed(7)
@@ -23,7 +23,7 @@ class TowerOne(nn.Module):
             batch_first=True,
             dropout=0.0  # Less dropout for shorter sequences
         )
-        self.fc = nn.Linear(256, 64)
+        self.fc = nn.Linear(256, 128)
 
     def forward(self, x):
         # x shape: (batch_size, ~20, bert_dim) for queries
@@ -40,7 +40,7 @@ class TowerTwo(nn.Module):
             batch_first=True,
             dropout=0.0       # More dropout for longer sequences
         )
-        self.fc = nn.Linear(512, 64)  # Project down to same size as TowerOne
+        self.fc = nn.Linear(512, 128)  # Project down to same size as TowerOne
 
     def forward(self, x):
         # x shape: (batch_size, ~200, bert_dim) for documents
@@ -87,7 +87,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.ba
 # Initialize model
 model = DualTowerModel()
 model.to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
 
 # Get datasets and dataloaders
 print("Loading training data...")
@@ -96,13 +96,12 @@ triple_dataloader = DataLoader(triple_dataset, batch_size=batch_size, shuffle=Tr
 
 print("Loading validation data...")
 val_triple_dataset = get_datasets("validation")
-val_triple_dataloader = DataLoader(val_triple_dataset, batch_size=batch_size)
 
-wandb.init(project="two-towers", config={"batch_size": batch_size, "num_epochs": num_epochs, "learning_rate": optimizer.param_groups[0]["lr"]})
+wandb.init(project="two-towers", config={"batch_size": batch_size, "num_epochs": num_epochs, "learning_rate": optimizer.param_groups[0]["lr"], "margin": margin})
 
 # Training loop
 for epoch in range(num_epochs):
-    model.train()
+    val_triple_dataloader = DataLoader(val_triple_dataset, batch_size=batch_size)
     batch_losses = []
 
     train_loop = tqdm(triple_dataloader, 
@@ -129,10 +128,17 @@ for epoch in range(num_epochs):
                 model.eval()
                 val_query_batch, val_documents_batch, val_neg_documents_batch = next(iter(val_triple_dataloader))
                 val_loss = model.compute_loss(val_query_batch, val_documents_batch, val_neg_documents_batch)
-                wandb.log({"val_loss": val_loss.item()})
+                wandb.log({"batch_val_loss": val_loss.item()})
     
     train_loss = sum(batch_losses) / len(batch_losses)
 
+    # save weights and upload to wandb
+    torch.save(model.state_dict(), f"models/two_towers_{epoch}.pth")
+    wandb.save(f"models/two_towers_{epoch}.pth")
+
+
+    # reset the val_triple_dataloader
+    val_triple_dataloader = DataLoader(val_triple_dataset, batch_size=batch_size)
     # Validation loop
     val_losses = []
     with torch.no_grad():
