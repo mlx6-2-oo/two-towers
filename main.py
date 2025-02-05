@@ -7,6 +7,10 @@ import wandb
 import embeddings
 batch_size = 512
 num_epochs = 10
+margin = 0.5
+
+
+torch.manual_seed(7)
 
 
 class TowerOne(nn.Module):
@@ -14,12 +18,12 @@ class TowerOne(nn.Module):
         super().__init__()
         self.rnn = nn.RNN(
             input_size=input_dim,
-            hidden_size=128,
-            num_layers=1,
+            hidden_size=256,
+            num_layers=2,
             batch_first=True,
             dropout=0.0  # Less dropout for shorter sequences
         )
-        self.fc = nn.Linear(128, 64)
+        self.fc = nn.Linear(256, 64)
 
     def forward(self, x):
         # x shape: (batch_size, ~20, bert_dim) for queries
@@ -31,12 +35,12 @@ class TowerTwo(nn.Module):
         super().__init__()
         self.rnn = nn.RNN(
             input_size=input_dim,
-            hidden_size=128,  # Larger hidden size for longer sequences
-            num_layers=2,     # More layers to capture document structure
+            hidden_size=512,  # Larger hidden size for longer sequences
+            num_layers=3,     # More layers to capture document structure
             batch_first=True,
             dropout=0.0       # More dropout for longer sequences
         )
-        self.fc = nn.Linear(128, 64)  # Project down to same size as TowerOne
+        self.fc = nn.Linear(512, 64)  # Project down to same size as TowerOne
 
     def forward(self, x):
         # x shape: (batch_size, ~200, bert_dim) for documents
@@ -63,19 +67,19 @@ class DualTowerModel(nn.Module):
         negative_doc_output = self.tower_two(negative_docs)
         
         # Calculate similarities
-        positive_score = torch.cosine_similarity(query_output, positive_doc_output)
-        negative_score = torch.cosine_similarity(query_output, negative_doc_output)
+        relevant_similarity = torch.cosine_similarity(query_output, positive_doc_output)
+        irrelevant_similarity = torch.cosine_similarity(query_output, negative_doc_output)
+
+        # Translate to [0, 2]
+        relevant_distance = 1 - relevant_similarity 
+        irrelevant_distance = 1 - irrelevant_similarity
+
+        loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin).mean()
+        return loss
         
-        # Combine scores and create target
-        scores = torch.sigmoid(torch.cat([positive_score, negative_score]))
-        target = torch.cat([torch.ones_like(positive_score), torch.zeros_like(negative_score)])
-        
-        return scores, target
-    
     def compute_loss(self, query_batch, document_batch, negative_document_batch):
         queries, positive_docs, negative_docs = self.prepare_batch(query_batch, document_batch, negative_document_batch)
-        scores, target = self(queries, positive_docs, negative_docs)
-        return nn.BCELoss()(scores, target)
+        return self(queries, positive_docs, negative_docs)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
@@ -106,6 +110,7 @@ for epoch in range(num_epochs):
                      total=len(triple_dataloader))
     
     for batch_idx, (query_batch, document_batch, neg_document_batch) in enumerate(train_loop):
+        model.train()
         optimizer.zero_grad()
         
         # Compute loss
@@ -117,6 +122,14 @@ for epoch in range(num_epochs):
         batch_losses.append(loss.item())
         train_loop.set_postfix(loss=f'{loss.item():.4f}')
         wandb.log({"batch_loss": loss.item(), "batch": batch_idx + epoch * len(triple_dataloader)})
+
+        if batch_idx % 10 == 0:
+            with torch.no_grad():
+                # validate with just the first batch
+                model.eval()
+                val_query_batch, val_documents_batch, val_neg_documents_batch = next(iter(val_triple_dataloader))
+                val_loss = model.compute_loss(val_query_batch, val_documents_batch, val_neg_documents_batch)
+                wandb.log({"val_loss": val_loss.item()})
     
     train_loss = sum(batch_losses) / len(batch_losses)
 
