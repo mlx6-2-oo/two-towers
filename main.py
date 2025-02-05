@@ -5,7 +5,7 @@ from dataset import get_datasets
 from tqdm import tqdm
 import wandb
 import embeddings
-batch_size = 512
+batch_size = 64
 num_epochs = 10
 margin = 0.3
 
@@ -122,7 +122,7 @@ for epoch in range(num_epochs):
         train_loop.set_postfix(loss=f'{loss.item():.4f}')
         wandb.log({"batch_loss": loss.item(), "batch": batch_idx + epoch * len(triple_dataloader)})
 
-        if batch_idx % 10 == 0:
+        if batch_idx % 100 == 0:
             with torch.no_grad():
                 # validate with just the first batch
                 model.eval()
@@ -133,8 +133,8 @@ for epoch in range(num_epochs):
     train_loss = sum(batch_losses) / len(batch_losses)
 
     # save weights and upload to wandb
-    torch.save(model.state_dict(), f"models/two_towers_{epoch}.pth")
-    wandb.save(f"models/two_towers_{epoch}.pth")
+    torch.save(model.state_dict(), f"two_towers_{epoch}.pth")
+    wandb.save(f"two_towers_{epoch}.pth")
 
 
     # reset the val_triple_dataloader
@@ -148,8 +148,10 @@ for epoch in range(num_epochs):
                        desc='Validation',
                        total=len(val_triple_dataloader))
         
-        for (val_query_batch, val_documents_batch, val_neg_documents_batch) in val_loop:
 
+        for batch_idx, (val_query_batch, val_documents_batch, val_neg_documents_batch) in enumerate(val_loop):
+            if batch_idx > 10:
+                break
             # Compute validation loss
             val_loss = model.compute_loss(val_query_batch, val_documents_batch, val_neg_documents_batch)
             
