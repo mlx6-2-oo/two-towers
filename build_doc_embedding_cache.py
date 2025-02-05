@@ -13,7 +13,7 @@ documents = training_dataset.documents
 model = DualTowerModel()
 model.to(device)
 model.eval()
-model.load_state_dict(torch.load("actual_weights/two_towers_4.pth", map_location=device))
+model.load_state_dict(torch.load("weights/two_towers.pth", map_location=device))
 
 tower_two = model.tower_two
 tower_two.eval()
@@ -32,4 +32,4 @@ with torch.no_grad():
 
 embeddings_tensor = torch.stack(rnn_embeddings)
 normalized_embeddings = torch.nn.functional.normalize(embeddings_tensor, p=2, dim=1)
-torch.save(normalized_embeddings, "rnn_embeddings.pth")
+torch.save(normalized_embeddings, "weights/doc_embeddings.pth")
