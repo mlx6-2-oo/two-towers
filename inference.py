@@ -10,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.ba
 training_dataset = get_datasets("train")
 
 documents = training_dataset.documents
-doc_embeddings = torch.load("weights/doc_embeddings.pth")
+doc_embeddings = torch.load("weights/doc_embeddings.pth", map_location=device)
 
 model = DualTowerModel()
 model.to(device)
