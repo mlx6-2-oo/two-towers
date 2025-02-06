@@ -1,7 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from ..inference.search import init_models, search_with_models
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load models at startup
 print("Loading models...")
