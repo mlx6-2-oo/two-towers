@@ -3,6 +3,9 @@ import embeddings
 from model import DualTowerModel
 import torch
 from tqdm import tqdm
+import os
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
@@ -13,7 +16,8 @@ documents = training_dataset.documents
 model = DualTowerModel()
 model.to(device)
 model.eval()
-model.load_state_dict(torch.load("weights/two_towers.pth", map_location=device))
+model_path = os.path.join(script_dir, "weights", "two_towers.pth")
+model.load_state_dict(torch.load(model_path, map_location=device))
 
 tower_two = model.tower_two
 tower_two.eval()
@@ -32,4 +36,5 @@ with torch.no_grad():
 
 embeddings_tensor = torch.stack(rnn_embeddings)
 normalized_embeddings = torch.nn.functional.normalize(embeddings_tensor, p=2, dim=1)
-torch.save(normalized_embeddings, "weights/doc_embeddings.pth")
+doc_embeddings_path = os.path.join(script_dir, "weights", "doc_embeddings.pth")
+torch.save(normalized_embeddings, doc_embeddings_path)

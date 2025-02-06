@@ -4,18 +4,22 @@ from model import DualTowerModel
 import torch
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
 
 training_dataset = get_datasets("train")
 
 documents = training_dataset.documents
-doc_embeddings = torch.load("weights/doc_embeddings.pth", map_location=device)
+doc_embeddings_path = os.path.join(script_dir, "weights", "doc_embeddings.pth")
+doc_embeddings = torch.load(doc_embeddings_path, map_location=device)
 
 model = DualTowerModel()
 model.to(device)
 model.eval()
-model.load_state_dict(torch.load("weights/two_towers.pth", map_location=device))
+model_path = os.path.join(script_dir, "weights", "two_towers.pth")
+model.load_state_dict(torch.load(model_path, map_location=device))
 
 tower_one = model.tower_one
 tower_one.eval()
