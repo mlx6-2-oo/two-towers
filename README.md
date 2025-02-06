@@ -71,7 +71,7 @@ Note: The Docker container uses a minimal set of dependencies defined in `requir
 # Remote Deployment Instructions
 
 ```bash
-docker build --platform linux/amd54 -t docker_hub_account_name/project_name .
+docker build --platform linux/amd64 -t docker_hub_account_name/project_name .
 docker push docker_hub_account_name/project_name
 ssh root@ip
 docker pull docker_hub_account_name/project_name
