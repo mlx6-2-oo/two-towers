@@ -44,7 +44,7 @@ python run_pipeline.py
 python run_pipeline.py --wandb # save results to wandb
 ```
 
-## Deployment Instructions
+## Local Deployment Instructions
 
 1. Build the Docker image:
 ```bash
@@ -67,3 +67,17 @@ python -m src.client.cli
 The server will be available at `http://localhost:8000` and the client will automatically connect to it.
 
 Note: The Docker container uses a minimal set of dependencies defined in `requirements.docker.txt`, while the development environment uses the full set in `requirements.txt`.
+
+# Remote Deployment Instructions
+
+```bash
+docker build --platform linux/amd54 -t docker_hub_account_name/project_name .
+docker push docker_hub_account_name/project_name
+ssh root@ip
+docker pull docker_hub_account_name/project_name
+docker run -dp 8000:8000 docker_hub_account_name/project_name
+# to kill
+docker container ls
+docker stop <id>
+docker rm <ic>
+```
