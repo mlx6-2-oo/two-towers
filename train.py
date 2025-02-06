@@ -81,7 +81,7 @@ def train():
             optimizer.step()
 
             batch_losses.append(loss.item())
-            train_loop.set_postfix(loss=f"{loss.item():.4f}")
+            train_loop.set_postfix(loss=f"{sum(batch_losses) / len(batch_losses):.4f}")
             wandb.log(
                 {
                     "batch_loss": loss.item(),
@@ -106,6 +106,9 @@ def train():
                             val_neg_documents_batch,
                         )
                     )
+                    # iterate iterator to end
+                    for _ in val_triple_dataloader:
+                        pass
                     wandb.log(
                         {
                             "batch_val_loss": val_loss.item(),
@@ -147,7 +150,11 @@ def train():
                 )
 
                 val_losses.append(val_loss.item())
-                val_loop.set_postfix(loss=f"{val_loss.item():.4f}")
+                val_loop.set_postfix(loss=f"{sum(val_losses) / len(val_losses):.4f}")
+
+            # iterate iterator to end
+            for _ in val_triple_dataloader:
+                pass
 
         val_loss = sum(val_losses) / len(val_losses)
 
