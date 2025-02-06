@@ -5,14 +5,14 @@ import torch
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import os
-from utils import download_weights
+from utils import download_weights, get_device
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 download_weights(os.path.join(script_dir, "weights", "doc_embeddings.pth"), "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/doc_embeddings.pth")
 download_weights(os.path.join(script_dir, "weights", "two_towers.pth"), "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/two_towers.pth")
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+device = get_device()
 
 training_dataset = get_datasets("train")
 

@@ -3,11 +3,11 @@ from torch.utils.data import Dataset
 from datasets import load_dataset
 import random
 import embeddings
-import torch
+from utils import get_device
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+device = get_device()
 
 def get_datasets(dataset_name):
     dataset = load_dataset("microsoft/ms_marco", "v1.1")

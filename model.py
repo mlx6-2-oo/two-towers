@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-import embeddings
+from utils import get_device
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+device = get_device()
 
 margin = 0.3
 

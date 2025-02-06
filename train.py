@@ -5,15 +5,16 @@ from tqdm import tqdm
 import wandb
 from model import DualTowerModel, margin
 import torch.multiprocessing as mp
+from utils import get_device
 
 def train():
     batch_size = 512
     num_epochs = 10
-    num_workers = 2
 
     torch.manual_seed(7)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    device = get_device()
+    num_workers = 2 if device.type in ['cpu', 'cuda'] else 0
 
     # Initialize model
     model = DualTowerModel()
