@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Development
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific - models
+*.pt
+!src/models/tower_one.pt
+!src/models/tower_two.pt
+!src/models/document_embeddings.pt
+
+# Project specific - code
+src/data/generate_embeddings.py
+src/data/load_msmarco.py
+src/data/generate_document_embeddings.py
+src/training/
+run_pipeline.py
+setup.sh
+tests/
+
+# Logs and caches
+wandb/
+*.log
+.pytest_cache/
+.coverage 
