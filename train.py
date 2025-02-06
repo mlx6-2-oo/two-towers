@@ -14,7 +14,8 @@ def train():
     torch.manual_seed(7)
 
     device = get_device()
-    num_workers = 2 if device.type in ['cpu', 'cuda'] else 0
+    num_workers = 2 if device.type in ["cpu", "cuda"] else 0
+    persistent_workers = True if num_workers > 0 else False
 
     # Initialize model
     model = DualTowerModel()
@@ -24,7 +25,14 @@ def train():
     # Get datasets and dataloaders
     print("Loading training data...")
     triple_dataset = get_datasets("train")
-    triple_dataloader = DataLoader(triple_dataset, batch_size=batch_size, shuffle=True, collate_fn=triple_dataset.collate_fn, num_workers=num_workers)
+    triple_dataloader = DataLoader(
+        triple_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=triple_dataset.collate_fn,
+        num_workers=num_workers,
+        persistent_workers=persistent_workers,
+    )
 
     print("Loading validation data...")
     val_triple_dataset = get_datasets("validation")
