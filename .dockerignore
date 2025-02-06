@@ -35,6 +35,9 @@ run_pipeline.py
 setup.sh
 tests/
 
+# Frontend (separate deployment)
+frontend/
+
 # Logs and caches
 wandb/
 *.log

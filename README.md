@@ -81,3 +81,53 @@ docker container ls
 docker stop <id>
 docker rm <ic>
 ```
+
+# Frontend Deployment
+
+The project includes a web-based terminal interface in the `frontend/` directory.
+
+## Local Frontend Development
+
+1. Build the frontend Docker image:
+```bash
+cd frontend
+docker build -t two-towers-frontend .
+```
+
+2. Run the frontend container:
+```bash
+docker run -dp 80:80 two-towers-frontend
+```
+
+The terminal interface will be available at:
+- Local development: http://localhost
+- Remote server: http://your-server-ip
+
+## Full Stack Deployment
+
+To deploy both backend and frontend on a server:
+
+1. Deploy backend:
+```bash
+# Build and push backend
+docker build --platform linux/amd64 -t your-repo/two-towers-backend .
+docker push your-repo/two-towers-backend
+
+# On your server
+docker pull your-repo/two-towers-backend
+docker run -dp 8000:8000 your-repo/two-towers-backend
+```
+
+2. Deploy frontend:
+```bash
+# Build and push frontend
+cd frontend
+docker build --platform linux/amd64 -t your-repo/two-towers-frontend .
+docker push your-repo/two-towers-frontend
+
+# On your server
+docker pull your-repo/two-towers-frontend
+docker run -dp 80:80 your-repo/two-towers-frontend
+```
+
+Note: Before deploying the frontend, make sure to update `SERVER_URL` in `frontend/app.js` to point to your backend server's address.
