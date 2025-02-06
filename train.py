@@ -10,12 +10,12 @@ from utils import get_device
 
 
 def train():
-    batch_size = 32
     num_epochs = 10
 
     torch.manual_seed(7)
 
     device = get_device()
+    batch_size = 512 if device.type in ["cuda"] else 32
     num_workers = 2 if device.type in ["cpu", "cuda"] else 0
     persistent_workers = True if num_workers > 0 else False
 

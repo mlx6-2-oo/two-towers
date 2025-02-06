@@ -1,4 +1,5 @@
 import torch
+from torch.nn.utils.rnn import pack_padded_sequence
 from transformers import AutoTokenizer, BertModel
 
 from utils import get_device
@@ -26,11 +27,18 @@ def get_embeddings(texts, max_length):
         tokens = tokenizer(
             texts,
             return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=max_length,
+            padding=True,
         )
         tokens = tokens.to(device)
 
         embeddings = model(**tokens).last_hidden_state
-        return embeddings
+
+        sequence_lengths = torch.sum(tokens["attention_mask"], dim=1).cpu()
+        packed_embeddings = pack_padded_sequence(
+            embeddings,
+            sequence_lengths,
+            batch_first=True,
+            enforce_sorted=False,
+        )
+
+        return packed_embeddings
