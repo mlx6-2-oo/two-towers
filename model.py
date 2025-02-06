@@ -11,37 +11,52 @@ margin = 0.3
 class TowerOne(nn.Module):
     def __init__(self, input_dim=312):
         super().__init__()
-        self.rnn = nn.RNN(
+        self.batch_norm = nn.BatchNorm1d(input_dim)
+        self.gru = nn.GRU(
             input_size=input_dim,
             hidden_size=256,
             num_layers=2,
             batch_first=True,
-            dropout=0.0,  # Less dropout for shorter sequences
+            dropout=0.1,  # Less dropout for shorter sequences
         )
+        self.layer_norm = nn.LayerNorm(256)
         self.fc = nn.Linear(256, 128)
 
     def forward(self, x):
         # x shape: (batch_size, ~20, bert_dim) for queries
-        _, hidden = self.rnn(x)
-        return self.fc(hidden[-1])
+        batch_size, seq_len, _ = x.shape
+        # Flatten the sequence and feature dimension
+        x = x.view(batch_size * seq_len, -1)
+        x = self.batch_norm(x)
+        x = x.view(batch_size, seq_len, -1)
+        _, hidden = self.gru(x)
+        hidden = self.layer_norm(hidden[-1])
+        return self.fc(hidden)
 
 
 class TowerTwo(nn.Module):
     def __init__(self, input_dim=312):
         super().__init__()
-        self.rnn = nn.RNN(
+        self.batch_norm = nn.BatchNorm1d(input_dim)
+        self.gru = nn.GRU(
             input_size=input_dim,
             hidden_size=512,  # Larger hidden size for longer sequences
             num_layers=3,  # More layers to capture document structure
             batch_first=True,
-            dropout=0.0,  # More dropout for longer sequences
+            dropout=0.3,  # More dropout for longer sequences
         )
+        self.layer_norm = nn.LayerNorm(512)
         self.fc = nn.Linear(512, 128)  # Project down to same size as TowerOne
 
     def forward(self, x):
         # x shape: (batch_size, ~200, bert_dim) for documents
-        _, hidden = self.rnn(x)
-        return self.fc(hidden[-1])
+        batch_size, seq_len, _ = x.shape
+        x = x.view(batch_size * seq_len, -1)
+        x = self.batch_norm(x)
+        x = x.view(batch_size, seq_len, -1)
+        _, hidden = self.gru(x)
+        hidden = self.layer_norm(hidden[-1])
+        return self.fc(hidden)
 
 
 class DualTowerModel(nn.Module):

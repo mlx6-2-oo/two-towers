@@ -16,13 +16,13 @@ def train():
 
     device = get_device()
     batch_size = 512 if device.type in ["cuda"] else 32
-    num_workers = 2 if device.type in ["cpu", "cuda"] else 0
+    num_workers = 1 if device.type in ["cpu", "cuda"] else 0
     persistent_workers = True if num_workers > 0 else False
 
     # Initialize model
     model = DualTowerModel()
     model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
     # Get datasets and dataloaders
     print("Loading training data...")
