@@ -46,18 +46,16 @@ class DualTowerModel(nn.Module):
         self.tower_one = TowerOne()
         self.tower_two = TowerTwo()
     
-    def prepare_batch(self, query_batch, document_batch, negative_document_batch):
-        query_embeddings = embeddings.get_query_embeddings(query_batch).to(device)
-        positive_doc_embeddings = embeddings.get_document_embeddings(document_batch).to(device)
-        negative_doc_embeddings = embeddings.get_document_embeddings(negative_document_batch).to(device)
-
-        return query_embeddings, positive_doc_embeddings, negative_doc_embeddings
-        
     def forward(self, queries, positive_docs, negative_docs):
         # Forward pass through towers
         query_output = self.tower_one(queries)
         positive_doc_output = self.tower_two(positive_docs)
         negative_doc_output = self.tower_two(negative_docs)
+
+        return query_output, positive_doc_output, negative_doc_output
+
+    def compute_loss(self, query_batch, document_batch, neg_document_batch):
+        query_output, positive_doc_output, negative_doc_output = self(query_batch, document_batch, neg_document_batch)
         
         # Calculate similarities
         relevant_similarity = torch.cosine_similarity(query_output, positive_doc_output)
@@ -67,9 +65,8 @@ class DualTowerModel(nn.Module):
         relevant_distance = 1 - relevant_similarity 
         irrelevant_distance = 1 - irrelevant_similarity
 
-        loss = torch.max(torch.tensor(0.0), relevant_distance - irrelevant_distance + margin).mean()
-        return loss
+        unclamped_loss = relevant_distance - irrelevant_distance + margin
+
+        loss = torch.max(torch.tensor(0.0), unclamped_loss).mean()
+        return loss, unclamped_loss.mean(), relevant_distance.mean(), irrelevant_distance.mean()
         
-    def compute_loss(self, query_batch, document_batch, negative_document_batch):
-        queries, positive_docs, negative_docs = self.prepare_batch(query_batch, document_batch, negative_document_batch)
-        return self(queries, positive_docs, negative_docs)
