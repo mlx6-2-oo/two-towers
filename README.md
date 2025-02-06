@@ -58,6 +58,9 @@ docker run -p 8000:8000 two-towers
 
 3. In a separate terminal, run the client:
 ```bash
+# this will run it against a remote server
+python -m src.client.cli --server <IP>:8000
+# this will default to localhost
 python -m src.client.cli
 ```
 
