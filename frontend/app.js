@@ -7,24 +7,23 @@ const term = new Terminal({
     theme: {
         background: '#1e1e1e',
         foreground: '#ffffff'
-    }
+    },
+    fontSize: 16
 });
 
+// Create and load FitAddon
+const fitAddon = new FitAddon.FitAddon();
+term.loadAddon(fitAddon);
+
+// Open terminal and fit to screen
 term.open(document.getElementById('terminal'));
+fitAddon.fit();
 
-// ASCII art welcome message
-const welcome = `
- _____                 _____                           
-|_   _|              |_   _|                          
-  | |_      ____       | | _____      _____ _ __ ___ 
-  | \\ \\ /\\ / /_ |      | |/ _ \\ \\ /\\ / / _ \\ '__/ __|
-  | |\\ V  V / | |      | | (_) \\ V  V /  __/ |  \\__ \\
-  \\_/ \\_/\\_/  |_|      \\_/\\___/ \\_/\\_/ \\___|_|  |___/
-                                                      
-Type your search query or 'quit' to exit.
-`;
+// Handle window resizing
+window.addEventListener('resize', () => {
+    fitAddon.fit();
+});
 
-term.writeln(welcome);
 term.write('\n$ ');
 
 let inputBuffer = '';
