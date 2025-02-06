@@ -1,15 +1,23 @@
-from dataset import get_datasets
-import embeddings
-from model import DualTowerModel
+import os
+
 import torch
 from tqdm import tqdm
-import os
+
+import embeddings
+from dataset import get_datasets
+from model import DualTowerModel
 from utils import download_weights, get_device
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-download_weights(os.path.join(script_dir, "weights", "doc_embeddings.pth"), "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/doc_embeddings.pth")
-download_weights(os.path.join(script_dir, "weights", "two_towers.pth"), "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/two_towers.pth")
+download_weights(
+    os.path.join(script_dir, "weights", "doc_embeddings.pth"),
+    "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/doc_embeddings.pth",
+)
+download_weights(
+    os.path.join(script_dir, "weights", "two_towers.pth"),
+    "https://huggingface.co/datasets/12v12v/ml6-two-towers/resolve/main/two_towers.pth",
+)
 
 device = get_device()
 
@@ -33,7 +41,7 @@ batch_size = 256
 
 with torch.no_grad():
     for i in tqdm(range(0, len(documents), batch_size), desc="Embedding documents"):
-        batch = documents[i:i+batch_size]
+        batch = documents[i : i + batch_size]
         batch_bert_embeddings = embeddings.get_document_embeddings(batch).to(device)
         batch_rnn_embeddings = tower_two.forward(batch_bert_embeddings)
         rnn_embeddings.extend(batch_rnn_embeddings)
