@@ -7,7 +7,7 @@ import wandb
 import embeddings
 from model import DualTowerModel, margin
 
-batch_size = 64
+batch_size = 512
 num_epochs = 10
 
 torch.manual_seed(7)
