@@ -9,6 +9,18 @@ from model import DualTowerModel, margin
 from utils import get_device
 
 
+def create_dataloader(dataset, batch_size, num_workers=0):
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=dataset.collate_fn,
+        drop_last=True,
+        num_workers=num_workers,
+        persistent_workers=True if num_workers > 0 else False,
+    )
+
+
 def train():
     num_epochs = 10
 
@@ -17,7 +29,6 @@ def train():
     device = get_device()
     batch_size = 512 if device.type in ["cuda"] else 32
     num_workers = 1 if device.type in ["cpu", "cuda"] else 0
-    persistent_workers = True if num_workers > 0 else False
 
     # Initialize model
     model = DualTowerModel()
@@ -27,24 +38,15 @@ def train():
     # Get datasets and dataloaders
     print("Loading training data...")
     triple_dataset = get_datasets("train")
-    triple_dataloader = DataLoader(
+    triple_dataloader = create_dataloader(
         triple_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=triple_dataset.collate_fn,
-        num_workers=num_workers,
-        persistent_workers=persistent_workers,
+        batch_size,
+        num_workers,
     )
 
     print("Loading validation data...")
     val_triple_dataset = get_datasets("validation")
-    val_triple_dataloader = DataLoader(
-        val_triple_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=triple_dataset.collate_fn,
-        drop_last=True,
-    )
+    val_triple_dataloader = create_dataloader(val_triple_dataset, batch_size)
 
     wandb.init(
         project="two-towers",
@@ -106,9 +108,6 @@ def train():
                             val_neg_documents_batch,
                         )
                     )
-                    # iterate iterator to end
-                    for _ in val_triple_dataloader:
-                        pass
                     wandb.log(
                         {
                             "batch_val_loss": val_loss.item(),
@@ -152,9 +151,8 @@ def train():
                 val_losses.append(val_loss.item())
                 val_loop.set_postfix(loss=f"{sum(val_losses) / len(val_losses):.4f}")
 
-            # iterate iterator to end
-            for _ in val_triple_dataloader:
-                pass
+            # reset dataloader
+            val_triple_dataloader = create_dataloader(val_triple_dataset, batch_size)
 
         val_loss = sum(val_losses) / len(val_losses)
 
